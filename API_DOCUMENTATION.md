@@ -2,7 +2,7 @@
 
 ## 🌐 Base URL
 ```
-http://localhost:8080/api
+https://chaski-eva-hghugee4aceme5g6.canadacentral-01.azurewebsites.net/api
 ```
 
 ---
