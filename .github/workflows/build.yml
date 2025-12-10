@@ -1,0 +1,32 @@
+name: Build Backend Chaski
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+
+    - name: Configurar JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Build con Maven (sin tests)
+      run: mvn clean package -DskipTests
+
+    - name: Subir artefacto JAR
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-chaski-jar
+        path: target/*.jar
+        retention-days: 5
