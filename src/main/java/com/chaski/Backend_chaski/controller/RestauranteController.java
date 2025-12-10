@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/restaurantes")
-@CrossOrigin(origins = "*")
 public class RestauranteController {
 
     @Autowired
@@ -54,7 +53,8 @@ public class RestauranteController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RestauranteDTO> actualizar(@PathVariable Integer id, @RequestBody RestauranteDTO restauranteDTO) {
+    public ResponseEntity<RestauranteDTO> actualizar(@PathVariable Integer id,
+            @RequestBody RestauranteDTO restauranteDTO) {
         return ResponseEntity.ok(restauranteService.actualizarRestaurante(id, restauranteDTO));
     }
 
@@ -69,4 +69,3 @@ public class RestauranteController {
         return ResponseEntity.noContent().build();
     }
 }
-

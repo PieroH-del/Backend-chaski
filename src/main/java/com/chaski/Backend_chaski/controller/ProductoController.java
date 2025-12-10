@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/productos")
-@CrossOrigin(origins = "*")
 public class ProductoController {
 
     @Autowired
@@ -53,7 +52,8 @@ public class ProductoController {
     }
 
     @PatchMapping("/{id}/disponibilidad")
-    public ResponseEntity<ProductoDTO> cambiarDisponibilidad(@PathVariable Integer id, @RequestParam Boolean disponible) {
+    public ResponseEntity<ProductoDTO> cambiarDisponibilidad(@PathVariable Integer id,
+            @RequestParam Boolean disponible) {
         return ResponseEntity.ok(productoService.cambiarDisponibilidad(id, disponible));
     }
 
@@ -63,4 +63,3 @@ public class ProductoController {
         return ResponseEntity.noContent().build();
     }
 }
-

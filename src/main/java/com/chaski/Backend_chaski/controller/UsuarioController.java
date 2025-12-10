@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/usuarios")
-@CrossOrigin(origins = "*")
 public class UsuarioController {
 
     @Autowired
@@ -53,4 +52,3 @@ public class UsuarioController {
         return ResponseEntity.noContent().build();
     }
 }
-

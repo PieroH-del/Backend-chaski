@@ -11,13 +11,12 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/direcciones")
-@CrossOrigin(origins = "*")
 public class DireccionController {
 
     @Autowired
     private DireccionService direccionService;
 
-    ////////////sasassas
+    //////////// sasassas
 
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<DireccionDTO>> obtenerPorUsuario(@PathVariable Integer usuarioId) {
@@ -45,4 +44,3 @@ public class DireccionController {
         return ResponseEntity.noContent().build();
     }
 }
-

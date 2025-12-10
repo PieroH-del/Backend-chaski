@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/categorias")
-@CrossOrigin(origins = "*")
 public class CategoriaController {
 
     @Autowired
@@ -43,4 +42,3 @@ public class CategoriaController {
         return ResponseEntity.noContent().build();
     }
 }
-
