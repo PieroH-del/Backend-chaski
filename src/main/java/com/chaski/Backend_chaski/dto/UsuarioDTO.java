@@ -15,6 +15,7 @@ public class UsuarioDTO {
     private String nombre;
     private String email;
     private String telefono;
+    private String contrasena;
     private String imagenPerfilUrl;
     private LocalDateTime fechaRegistro;
     private List<DireccionDTO> direcciones;

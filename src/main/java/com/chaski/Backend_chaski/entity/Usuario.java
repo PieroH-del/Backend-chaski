@@ -28,6 +28,9 @@ public class Usuario {
     @Column(unique = true)
     private String telefono;
 
+    @Column(nullable = false)
+    private String contrasena;
+
     @Column(name = "imagen_perfil_url")
     private String imagenPerfilUrl;
 
