@@ -1,6 +1,8 @@
 package com.chaski.Backend_chaski.controller;
 
+import com.chaski.Backend_chaski.dto.LoginRequest;
 import com.chaski.Backend_chaski.dto.UsuarioDTO;
+import com.chaski.Backend_chaski.dto.UsuarioRegistroRequest;
 import com.chaski.Backend_chaski.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,17 +28,37 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.obtenerPorId(id));
     }
 
+    /**
+     * Registro con Firebase
+     */
     @PostMapping("/registro")
-    public ResponseEntity<UsuarioDTO> registrarUsuario(@RequestBody UsuarioDTO usuarioDTO) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.registrarUsuario(usuarioDTO));
+    public ResponseEntity<UsuarioDTO> registrarUsuario(@RequestBody UsuarioRegistroRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(usuarioService.registrarUsuarioConFirebase(request));
     }
 
+    /**
+     * Login con Firebase
+     */
+    @PostMapping("/login")
+    public ResponseEntity<UsuarioDTO> login(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(usuarioService.loginConFirebase(request));
+    }
+
+    /**
+     * DEPRECADO: Mantener solo para testing sin Firebase
+     */
     @PostMapping("/login/email")
+    @Deprecated
     public ResponseEntity<UsuarioDTO> loginPorEmail(@RequestParam String email) {
         return ResponseEntity.ok(usuarioService.iniciarSesionPorEmail(email));
     }
 
+    /**
+     * DEPRECADO: Mantener solo para testing sin Firebase
+     */
     @PostMapping("/login/telefono")
+    @Deprecated
     public ResponseEntity<UsuarioDTO> loginPorTelefono(@RequestParam String telefono) {
         return ResponseEntity.ok(usuarioService.iniciarSesionPorTelefono(telefono));
     }

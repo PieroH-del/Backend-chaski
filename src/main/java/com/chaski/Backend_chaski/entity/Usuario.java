@@ -28,14 +28,18 @@ public class Usuario {
     @Column(unique = true)
     private String telefono;
 
-    @Column(nullable = false)
-    private String contrasena;
+    // Firebase UID - Firebase maneja las contraseñas
+    @Column(name = "firebase_uid", unique = true)
+    private String firebaseUid;
 
     @Column(name = "imagen_perfil_url")
     private String imagenPerfilUrl;
 
     @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
+
+    @Column(name = "activo")
+    private Boolean activo = true;
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
     private List<Direccion> direcciones;
@@ -46,6 +50,9 @@ public class Usuario {
     @PrePersist
     protected void onCreate() {
         fechaRegistro = LocalDateTime.now();
+        if (activo == null) {
+            activo = true;
+        }
     }
 }
 

@@ -15,9 +15,10 @@ public class UsuarioDTO {
     private String nombre;
     private String email;
     private String telefono;
-    private String contrasena;
+    private String firebaseUid;
     private String imagenPerfilUrl;
     private LocalDateTime fechaRegistro;
+    private Boolean activo;
     private List<DireccionDTO> direcciones;
 }
 

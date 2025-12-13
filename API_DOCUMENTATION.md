@@ -8,64 +8,113 @@ https://chaski-eva-hghugee4aceme5g6.canadacentral-01.azurewebsites.net/api
 ---
 
 ## 📋 Índice
-1. [Autenticación y Usuarios](#autenticación-y-usuarios)
-2. [Direcciones](#direcciones)
-3. [Restaurantes](#restaurantes)
-4. [Categorías](#categorías)
-5. [Productos](#productos)
-6. [Pedidos](#pedidos)
-7. [Pagos](#pagos)
-8. [Modelos de Datos](#modelos-de-datos)
-9. [Códigos de Estado](#códigos-de-estado)
+1. [Autenticación Firebase](#autenticación-firebase)
+2. [Usuarios](#usuarios)
+3. [Direcciones](#direcciones)
+4. [Restaurantes](#restaurantes)
+5. [Categorías](#categorías)
+6. [Productos](#productos)
+7. [Pedidos](#pedidos)
+8. [Pagos](#pagos)
+9. [Modelos de Datos](#modelos-de-datos)
+10. [Códigos de Estado](#códigos-de-estado)
 
 ---
 
-## 🔐 Autenticación y Usuarios
+## 🔐 Autenticación Firebase
 
-### Registrar Usuario
+Esta API utiliza **Firebase Authentication** para la gestión de usuarios. El frontend debe autenticar usuarios con Firebase y enviar el `idToken` al backend.
+
+### Configuración en el Frontend
+
+1. Configura Firebase en tu app móvil/web
+2. Autentica al usuario con Firebase (email/password, Google, etc.)
+3. Obtén el `idToken` del usuario autenticado
+4. Envía el token en las peticiones al backend
+
+### Registrar Usuario (con Firebase)
 ```http
 POST /api/usuarios/registro
 Content-Type: application/json
 
 {
+  "firebaseIdToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
   "nombre": "Juan Pérez",
-  "email": "juan@example.com",
   "telefono": "987654321",
   "imagenPerfilUrl": "https://example.com/foto.jpg"
 }
 ```
 
-**Respuesta:**
+**Respuesta Exitosa (201 Created):**
 ```json
 {
   "id": 1,
   "nombre": "Juan Pérez",
   "email": "juan@example.com",
   "telefono": "987654321",
+  "firebaseUid": "abc123xyz789",
   "imagenPerfilUrl": "https://example.com/foto.jpg",
-  "fechaRegistro": "2025-12-08T21:30:00",
+  "fechaRegistro": "2025-12-13T21:30:00",
+  "activo": true,
   "direcciones": []
 }
 ```
 
-### Login por Email
+### Login (con Firebase)
 ```http
-POST /api/usuarios/login/email?email=juan@example.com
+POST /api/usuarios/login
+Content-Type: application/json
+
+{
+  "firebaseIdToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
 ```
 
-### Login por Teléfono
+**Respuesta Exitosa (200 OK):**
+```json
+{
+  "id": 1,
+  "nombre": "Juan Pérez",
+  "email": "juan@example.com",
+  "telefono": "987654321",
+  "firebaseUid": "abc123xyz789",
+  "imagenPerfilUrl": "https://example.com/foto.jpg",
+  "fechaRegistro": "2025-12-13T21:30:00",
+  "activo": true,
+  "direcciones": [...]
+}
+```
+
+### Endpoints Protegidos
+Todos los endpoints (excepto `/registro` y `/login`) requieren el token de Firebase en el header:
+
 ```http
+GET /api/usuarios/1
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### Endpoints de Testing (DEPRECADOS)
+> ⚠️ **Estos endpoints son solo para desarrollo/testing y serán eliminados en producción**
+
+```http
+POST /api/usuarios/login/email?email=juan@example.com
 POST /api/usuarios/login/telefono?telefono=987654321
 ```
+
+---
+
+## 👤 Usuarios
 
 ### Obtener Usuario por ID
 ```http
 GET /api/usuarios/{id}
+Authorization: Bearer {firebaseIdToken}
 ```
 
 ### Actualizar Usuario
 ```http
 PUT /api/usuarios/{id}
+Authorization: Bearer {firebaseIdToken}
 Content-Type: application/json
 
 {
@@ -74,15 +123,18 @@ Content-Type: application/json
 }
 ```
 
-### Listar Todos los Usuarios
+### Listar Todos los Usuarios (Admin)
 ```http
 GET /api/usuarios
+Authorization: Bearer {firebaseIdToken}
 ```
 
 ### Eliminar Usuario
 ```http
 DELETE /api/usuarios/{id}
+Authorization: Bearer {firebaseIdToken}
 ```
+
 
 ---
 
@@ -566,9 +618,28 @@ interface Usuario {
   nombre: string;
   email: string;
   telefono: string;
+  firebaseUid: string;      // UID de Firebase Authentication
   imagenPerfilUrl?: string;
-  fechaRegistro: string; // ISO 8601
+  fechaRegistro: string;    // ISO 8601
+  activo: boolean;          // Estado del usuario
   direcciones?: Direccion[];
+}
+```
+
+### UsuarioRegistroRequest
+```typescript
+interface UsuarioRegistroRequest {
+  firebaseIdToken: string;  // Token de Firebase Authentication
+  nombre: string;
+  telefono?: string;
+  imagenPerfilUrl?: string;
+}
+```
+
+### LoginRequest
+```typescript
+interface LoginRequest {
+  firebaseIdToken: string;  // Token de Firebase Authentication
 }
 ```
 
@@ -754,50 +825,76 @@ type EstadoPago =
 
 ## 🔄 Flujo Completo: Realizar un Pedido
 
-### 1. Usuario se registra/inicia sesión
+### 1. Usuario se autentica con Firebase (Frontend)
+```javascript
+// En el frontend - autenticar con Firebase
+const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+const idToken = await userCredential.user.getIdToken();
+```
+
+### 2. Usuario se registra/inicia sesión en el Backend
 ```http
 POST /api/usuarios/registro
-POST /api/usuarios/login/email?email=usuario@example.com
+Content-Type: application/json
+
+{
+  "firebaseIdToken": "{idToken}",
+  "nombre": "Juan Pérez",
+  "telefono": "987654321"
+}
+```
+O login si ya está registrado:
+```http
+POST /api/usuarios/login
+Content-Type: application/json
+
+{
+  "firebaseIdToken": "{idToken}"
+}
 ```
 
-### 2. Usuario agrega/selecciona dirección de entrega
+### 3. Usuario agrega/selecciona dirección de entrega
 ```http
 POST /api/direcciones
+Authorization: Bearer {idToken}
+```
+```http
 GET /api/direcciones/usuario/{usuarioId}
+Authorization: Bearer {idToken}
 ```
 
-### 3. Usuario explora restaurantes
+### 4. Usuario explora restaurantes
 ```http
 GET /api/restaurantes/abiertos
+Authorization: Bearer {idToken}
+```
+```http
 GET /api/restaurantes/categoria/1
+Authorization: Bearer {idToken}
 ```
 
-### 4. Usuario ve el menú del restaurante
+### 5. Usuario ve el menú del restaurante
 ```http
 GET /api/productos/restaurante/{restauranteId}/disponibles
-GET /api/productos/{productoId}
+Authorization: Bearer {idToken}
 ```
 
-### 5. Usuario crea el pedido
+### 6. Usuario crea el pedido
 ```http
 POST /api/pedidos
+Authorization: Bearer {idToken}
 ```
 
-### 6. Usuario procesa el pago
+### 7. Usuario procesa el pago
 ```http
 POST /api/pagos/procesar
+Authorization: Bearer {idToken}
 ```
 
-### 7. Usuario monitorea el estado del pedido
+### 8. Usuario monitorea el estado del pedido
 ```http
 GET /api/pedidos/{pedidoId}
-```
-
-### 8. Gerente actualiza el estado
-```http
-PATCH /api/pedidos/{pedidoId}/confirmar
-PATCH /api/pedidos/{pedidoId}/preparacion
-PATCH /api/pedidos/{pedidoId}/listo
+Authorization: Bearer {idToken}
 ```
 
 ### 9. Repartidor actualiza el estado
@@ -889,15 +986,118 @@ Para implementar notificaciones en tiempo real, se recomienda usar **WebSockets*
 
 1. **CORS**: La API está configurada para aceptar peticiones de cualquier origen (`*`). En producción, configura los orígenes permitidos.
 
-2. **Autenticación**: Actualmente no hay autenticación JWT. Se recomienda implementar Spring Security con JWT para producción.
+2. **Autenticación Firebase**: 
+   - La API utiliza Firebase Authentication para gestionar usuarios
+   - El frontend debe autenticar usuarios con Firebase y enviar el `idToken` en cada petición
+   - El backend valida los tokens con Firebase Admin SDK
+   - Los endpoints `/registro` y `/login` son públicos, los demás requieren token
 
-3. **Validaciones**: Agrega validaciones en el frontend antes de enviar datos.
+3. **Headers de Autenticación**:
+   ```http
+   Authorization: Bearer {firebaseIdToken}
+   ```
 
-4. **Imágenes**: Las URLs de imágenes deben apuntar a servicios de almacenamiento como AWS S3, Cloudinary, etc.
+4. **Validaciones**: Agrega validaciones en el frontend antes de enviar datos.
 
-5. **Pagos**: La integración de pagos es simulada. Implementa Stripe, MercadoPago o similar para producción.
+5. **Imágenes**: Las URLs de imágenes deben apuntar a servicios de almacenamiento como AWS S3, Cloudinary, Firebase Storage, etc.
 
-6. **Base de Datos**: Configura la conexión a tu base de datos en `application.properties`.
+6. **Pagos**: La integración de pagos es simulada. Implementa Stripe, MercadoPago o similar para producción.
+
+7. **Base de Datos**: La API está conectada a Azure SQL Database.
+
+---
+
+## 🔧 Configuración Firebase para el Frontend
+
+### Flutter/Dart
+```dart
+import 'package:firebase_auth/firebase_auth.dart';
+
+// Obtener el token para enviar al backend
+Future<String?> getFirebaseToken() async {
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    return await user.getIdToken();
+  }
+  return null;
+}
+
+// Registrar usuario en el backend
+Future<void> registrarEnBackend(String nombre, String telefono) async {
+  String? token = await getFirebaseToken();
+  if (token != null) {
+    final response = await http.post(
+      Uri.parse('https://chaski-eva-hghugee4aceme5g6.canadacentral-01.azurewebsites.net/api/usuarios/registro'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'firebaseIdToken': token,
+        'nombre': nombre,
+        'telefono': telefono,
+      }),
+    );
+  }
+}
+
+// Login en el backend
+Future<void> loginEnBackend() async {
+  String? token = await getFirebaseToken();
+  if (token != null) {
+    final response = await http.post(
+      Uri.parse('https://chaski-eva-hghugee4aceme5g6.canadacentral-01.azurewebsites.net/api/usuarios/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'firebaseIdToken': token,
+      }),
+    );
+  }
+}
+
+// Petición autenticada
+Future<void> obtenerUsuario(int id) async {
+  String? token = await getFirebaseToken();
+  if (token != null) {
+    final response = await http.get(
+      Uri.parse('https://chaski-eva-hghugee4aceme5g6.canadacentral-01.azurewebsites.net/api/usuarios/$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
+}
+```
+
+### React Native / JavaScript
+```javascript
+import auth from '@react-native-firebase/auth';
+
+// Obtener el token
+const getFirebaseToken = async () => {
+  const user = auth().currentUser;
+  if (user) {
+    return await user.getIdToken();
+  }
+  return null;
+};
+
+// Registrar usuario
+const registrarEnBackend = async (nombre, telefono) => {
+  const token = await getFirebaseToken();
+  const response = await fetch(
+    'https://chaski-eva-hghugee4aceme5g6.canadacentral-01.azurewebsites.net/api/usuarios/registro',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firebaseIdToken: token,
+        nombre,
+        telefono,
+      }),
+    }
+  );
+  return await response.json();
+};
+```
 
 ---
 
@@ -924,5 +1124,5 @@ server.port=8080
 
 Para dudas o problemas con la API, contacta al equipo de backend.
 
-**Última actualización**: 2025-12-08
+**Última actualización**: 2025-12-13
 
